@@ -1,0 +1,919 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(255, 96, 96, 1)",
+        "name": "Security Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_ANALYZER_POSTGRESQL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 20
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_ANALYZER_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) as \"🚨 ICMP Floods\"\nFROM connections \nWHERE $__timeFilter(time) AND hostname IN ($hostname) \n  AND protocol = 'icmp'\n  AND packet_count > 100\n  AND destination_address NOT IN ('127.0.0.1', '::1')",
+          "refId": "A"
+        }
+      ],
+      "title": "🚨 Potential ICMP Floods",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_ANALYZER_POSTGRESQL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_ANALYZER_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(DISTINCT source_address) as \"🕵️ Suspicious IPs\"\nFROM connections \nWHERE $__timeFilter(time) AND hostname IN ($hostname) \n  AND (\n    packet_count > 1000 OR\n    byte_count > 10000000 OR\n    (protocol = 'tcp' AND destination_port IN (22, 23, 3389, 5900))\n  )",
+          "refId": "A"
+        }
+      ],
+      "title": "🕵️ Suspicious Source IPs",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_ANALYZER_POSTGRESQL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 8,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_ANALYZER_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) as \"🔒 Brute Force\"\nFROM connections \nWHERE $__timeFilter(time) AND hostname IN ($hostname) \n  AND protocol = 'tcp'\n  AND destination_port IN (22, 23, 3389, 21, 135, 445, 139)\n  AND packet_count > 10",
+          "refId": "A"
+        }
+      ],
+      "title": "🔒 Brute Force Attempts",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_ANALYZER_POSTGRESQL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 12,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_ANALYZER_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) as \"🔍 Port Scans\"\nFROM (\n  SELECT source_address, COUNT(DISTINCT destination_port) as port_count\n  FROM connections \n  WHERE $__timeFilter(time) AND hostname IN ($hostname) \n    AND protocol = 'tcp'\n    AND destination_address IS NOT NULL\n  GROUP BY source_address\n  HAVING COUNT(DISTINCT destination_port) > 10\n) port_scanners",
+          "refId": "A"
+        }
+      ],
+      "title": "🔍 Port Scan Detection",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_ANALYZER_POSTGRESQL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1000000
+              },
+              {
+                "color": "red",
+                "value": 100000000
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 16,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_ANALYZER_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT SUM(byte_count) as \"📤 Data Exfiltration\"\nFROM connections \nWHERE $__timeFilter(time) AND hostname IN ($hostname) \n  AND byte_count > 1000000\n  AND NOT (destination_address << '192.168.0.0/16' OR destination_address << '10.0.0.0/8' OR destination_address << '172.16.0.0/12')",
+          "refId": "A"
+        }
+      ],
+      "title": "📤 Potential Data Exfiltration",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_ANALYZER_POSTGRESQL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_ANALYZER_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(DISTINCT destination_port) as \"⚠️ Unusual Ports\"\nFROM connections \nWHERE $__timeFilter(time) AND hostname IN ($hostname) \n  AND destination_port NOT IN (80, 443, 22, 21, 25, 53, 110, 143, 993, 995, 465, 587)\n  AND destination_port > 1024",
+          "refId": "A"
+        }
+      ],
+      "title": "⚠️ Unusual Port Activity",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_ANALYZER_POSTGRESQL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "🚨 Risk Score"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-RdYlGr",
+                  "reverse": true
+                }
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "min",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "id": 7,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "🚨 Risk Score"
+          }
+        ]
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_ANALYZER_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH risk_analysis AS (\n  SELECT \n    source_address as \"🔍 Source IP\",\n    destination_address as \"🎯 Target IP\",\n    protocol as \"🔌 Protocol\",\n    destination_port as \"🚪 Port\",\n    COUNT(*) as connection_count,\n    SUM(packet_count) as total_packets,\n    SUM(byte_count) as total_bytes,\n    COUNT(DISTINCT destination_port) as unique_ports,\n    -- Risk scoring algorithm\n    CASE \n      WHEN destination_port IN (22, 23, 3389, 21, 135, 445, 139) THEN 40  -- High-risk ports\n      WHEN destination_port > 50000 THEN 20  -- Very high ports\n      WHEN protocol = 'icmp' AND COUNT(*) > 50 THEN 60  -- ICMP flooding\n      ELSE 10\n    END +\n    CASE \n      WHEN SUM(packet_count) > 1000 THEN 30\n      WHEN SUM(packet_count) > 100 THEN 15\n      ELSE 5\n    END +\n    CASE \n      WHEN SUM(byte_count) > 10000000 THEN 25  -- > 10MB\n      WHEN SUM(byte_count) > 1000000 THEN 10   -- > 1MB\n      ELSE 2\n    END as risk_score\n  FROM connections \n  WHERE $__timeFilter(time) AND hostname IN ($hostname) \n    AND source_address IS NOT NULL\n    AND destination_address IS NOT NULL\n  GROUP BY source_address, destination_address, protocol, destination_port\n  HAVING COUNT(*) > 1\n)\nSELECT \n  \"🔍 Source IP\",\n  \"🎯 Target IP\",\n  \"🔌 Protocol\",\n  \"🚪 Port\",\n  connection_count as \"🔗 Connections\",\n  total_packets as \"📦 Packets\",\n  total_bytes as \"📊 Bytes\",\n  risk_score as \"🚨 Risk Score\"\nFROM risk_analysis\nWHERE risk_score > 30\nORDER BY risk_score DESC\nLIMIT 25",
+          "refId": "A"
+        }
+      ],
+      "title": "🚨 High-Risk Network Activity",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_ANALYZER_POSTGRESQL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 40,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "icmp_attacks"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "port_scans"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "brute_force"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [
+            "last",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_ANALYZER_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time_bucket('5m', time) AS time,\n  'icmp_attacks' as metric,\n  COUNT(*) as value\nFROM connections \nWHERE $__timeFilter(time) AND hostname IN ($hostname) \n  AND protocol = 'icmp'\n  AND packet_count > 50\nGROUP BY time_bucket('5m', time)\n\nUNION ALL\n\nSELECT\n  time_bucket('5m', time) AS time,\n  'port_scans' as metric,\n  COUNT(DISTINCT source_address) as value\nFROM (\n  SELECT time, source_address, COUNT(DISTINCT destination_port) as ports\n  FROM connections \n  WHERE $__timeFilter(time) AND hostname IN ($hostname) AND protocol = 'tcp'\n  GROUP BY time, source_address\n  HAVING COUNT(DISTINCT destination_port) > 5\n) scans\nGROUP BY time_bucket('5m', time)\n\nUNION ALL\n\nSELECT\n  time_bucket('5m', time) AS time,\n  'brute_force' as metric,\n  COUNT(*) as value\nFROM connections \nWHERE $__timeFilter(time) AND hostname IN ($hostname) \n  AND protocol = 'tcp'\n  AND destination_port IN (22, 23, 3389, 21)\n  AND packet_count > 5\nGROUP BY time_bucket('5m', time)\n\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "🚨 Security Threats Timeline",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_ANALYZER_POSTGRESQL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "displayMode": "visible",
+          "placement": "bottom",
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_ANALYZER_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH threat_classification AS (\n  SELECT \n    CASE \n      WHEN destination_port IN (22, 23, 3389) THEN '🔒 Remote Access Attempts'\n      WHEN destination_port IN (21, 69) THEN '📁 File Transfer Attacks'\n      WHEN destination_port IN (135, 139, 445) THEN '🪟 Windows Service Attacks'\n      WHEN destination_port IN (25, 110, 143, 993, 995) THEN '📧 Email Service Attacks'\n      WHEN protocol = 'icmp' AND packet_count > 50 THEN '🚨 ICMP Flooding'\n      WHEN destination_port > 50000 THEN '🔍 High Port Scanning'\n      WHEN byte_count > 10000000 THEN '📤 Data Exfiltration'\n      ELSE '⚠️ Other Suspicious Activity'\n    END as threat_type,\n    COUNT(*) as threat_count\n  FROM connections \n  WHERE $__timeFilter(time) AND hostname IN ($hostname) \n    AND (\n      destination_port IN (22, 23, 3389, 21, 69, 135, 139, 445, 25, 110, 143, 993, 995) OR\n      (protocol = 'icmp' AND packet_count > 50) OR\n      destination_port > 50000 OR\n      byte_count > 10000000\n    )\n  GROUP BY \n    CASE \n      WHEN destination_port IN (22, 23, 3389) THEN '🔒 Remote Access Attempts'\n      WHEN destination_port IN (21, 69) THEN '📁 File Transfer Attacks'\n      WHEN destination_port IN (135, 139, 445) THEN '🪟 Windows Service Attacks'\n      WHEN destination_port IN (25, 110, 143, 993, 995) THEN '📧 Email Service Attacks'\n      WHEN protocol = 'icmp' AND packet_count > 50 THEN '🚨 ICMP Flooding'\n      WHEN destination_port > 50000 THEN '🔍 High Port Scanning'\n      WHEN byte_count > 10000000 THEN '📤 Data Exfiltration'\n      ELSE '⚠️ Other Suspicious Activity'\n    END\n)\nSELECT \n  threat_type,\n  threat_count\nFROM threat_classification\nORDER BY threat_count DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "🎯 Threat Classification",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_ANALYZER_POSTGRESQL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "🚨 Attack Score"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-RdYlGr",
+                  "reverse": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 10,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "🚨 Attack Score"
+          }
+        ]
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_ANALYZER_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH attacker_analysis AS (\n  SELECT \n    source_address,\n    COUNT(DISTINCT destination_address) as targets_count,\n    COUNT(DISTINCT destination_port) as ports_scanned,\n    SUM(packet_count) as total_packets,\n    SUM(byte_count) as total_bytes,\n    COUNT(*) as total_connections,\n    -- Advanced attack scoring\n    (\n      CASE WHEN COUNT(DISTINCT destination_port) > 50 THEN 40 ELSE COUNT(DISTINCT destination_port) END +\n      CASE WHEN COUNT(DISTINCT destination_address) > 20 THEN 30 ELSE COUNT(DISTINCT destination_address) END +\n      CASE WHEN SUM(packet_count) > 10000 THEN 20 ELSE SUM(packet_count)/500 END +\n      CASE WHEN COUNT(*) > 1000 THEN 25 ELSE COUNT(*)/40 END\n    ) as attack_score\n  FROM connections \n  WHERE $__timeFilter(time) AND hostname IN ($hostname) \n    AND source_address IS NOT NULL\n    AND source_address NOT IN ('127.0.0.1', '::1')\n    AND NOT (source_address << '192.168.0.0/16' OR source_address << '10.0.0.0/8' OR source_address << '172.16.0.0/12')\n  GROUP BY source_address\n  HAVING COUNT(*) > 5\n)\nSELECT \n  source_address as \"🔍 Attacker IP\",\n  targets_count as \"🎯 Targets\",\n  ports_scanned as \"🚪 Ports Scanned\",\n  total_connections as \"🔗 Total Connections\",\n  total_packets as \"📦 Total Packets\",\n  total_bytes as \"📊 Total Bytes\",\n  ROUND(attack_score::numeric, 1) as \"🚨 Attack Score\"\nFROM attacker_analysis\nWHERE attack_score > 10\nORDER BY attack_score DESC\nLIMIT 20",
+          "refId": "A"
+        }
+      ],
+      "title": "👹 Top Attackers Analysis",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "security",
+    "threats",
+    "monitoring",
+    "alerts"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "DS_ANALYZER_POSTGRESQL"
+        },
+        "definition": "SELECT DISTINCT hostname FROM connections ORDER BY hostname",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Hostname",
+        "multi": false,
+        "name": "hostname",
+        "options": [],
+        "query": "SELECT DISTINCT hostname FROM connections ORDER BY hostname",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "🛡️ Network Security Operations Center (SOC)",
+  "uid": "security_soc_dashboard",
+  "version": 1,
+  "weekStart": ""
+}

@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg14
+    container_name: analyzer-postgres
+    environment:
+      POSTGRES_DB: analyzer_metrics
+      POSTGRES_USER: grafana_user
+      POSTGRES_PASSWORD: analyzer_admin
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./sql/sample_data.sql:/docker-entrypoint-initdb.d/02-sample.sql
+    networks:
+      - analyzer-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U analyzer_user -d analyzer_metrics"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: analyzer-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource,grafana-worldmap-panel,grafana-piechart-panel
+      GF_FEATURE_TOGGLES_ENABLE: ngalert
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - analyzer-network
+    restart: unless-stopped
+
+  yaml-processor:
+    build: 
+      context: ./yaml-processor
+      dockerfile: Dockerfile
+    container_name: analyzer-yaml-processor
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: analyzer_metrics
+      POSTGRES_USER: analyzer_user
+      POSTGRES_PASSWORD: analyzer_password
+      YAML_WATCH_DIR: /app/reports
+      LOG_LEVEL: INFO
+    volumes:
+      - ../reports:/app/reports
+      - ./yaml-processor/logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - analyzer-network
+    restart: unless-stopped
+
+  # Опциональный Redis для кэширования
+  redis:
+    image: redis:7-alpine
+    container_name: analyzer-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - analyzer-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  grafana_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  analyzer-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16 

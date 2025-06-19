@@ -1,0 +1,75 @@
+FROM debian:11
+
+# Установка базовых пакетов для Debian
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip python3-venv lsof net-tools procps psmisc \
+    iproute2 strace tcpdump iputils-ping traceroute telnet dnsutils curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Создание рабочей директории
+WORKDIR /app
+
+# Копирование исходного кода
+COPY src/ ./src/
+
+# Установка зависимостей Python
+RUN python3 -m pip install --no-cache-dir -r src/requirements.txt || \
+    pip3 install --no-cache-dir -r src/requirements.txt
+
+# Создание расширенного тестового скрипта для Debian
+RUN echo '#!/bin/bash' > test_trackers.sh && \
+    echo 'echo "🔍 Тестирование трекеров и анализатора на Debian 11..."' >> test_trackers.sh && \
+    echo 'echo "📊 Системная информация:"' >> test_trackers.sh && \
+    echo 'uname -a' >> test_trackers.sh && \
+    echo 'python3 --version' >> test_trackers.sh && \
+    echo "" >> test_trackers.sh && \
+    echo 'echo "🌐 Тестирование сетевых инструментов:"' >> test_trackers.sh && \
+    echo 'which lsof netstat ss ping || echo "Некоторые инструменты недоступны"' >> test_trackers.sh && \
+    echo "" >> test_trackers.sh && \
+    echo 'echo "🚀 Запуск анализатора с расширенным режимом..."' >> test_trackers.sh && \
+    echo 'cd /app' >> test_trackers.sh && \
+    echo 'python3 src/glacier.py -w 15 -t 3' >> test_trackers.sh && \
+    echo "" >> test_trackers.sh && \
+    echo 'echo "📄 Анализ результатов:"' >> test_trackers.sh && \
+    echo 'ls -la *report*.yaml *report*.html 2>/dev/null || echo "Отчеты не найдены"' >> test_trackers.sh && \
+    echo "" >> test_trackers.sh && \
+    echo 'echo "🔍 Проверка YAML отчета на наличие трекерной информации:"' >> test_trackers.sh && \
+    echo 'if ls *report*.yaml >/dev/null 2>&1; then' >> test_trackers.sh && \
+    echo '    for file in *report*.yaml; do' >> test_trackers.sh && \
+    echo '        echo "📋 Анализ файла: $$file"' >> test_trackers.sh && \
+    echo '        python3 -c "' >> test_trackers.sh && \
+    echo 'import yaml, sys' >> test_trackers.sh && \
+    echo 'with open("$$file", "r", encoding="utf-8") as f:' >> test_trackers.sh && \
+    echo '    data = yaml.safe_load(f)' >> test_trackers.sh && \
+    echo 'print("📄 Тип отчета:", "NetFlow" if "netflow_message" in data else "Legacy")' >> test_trackers.sh && \
+    echo 'if "netflow_message" in data:' >> test_trackers.sh && \
+    echo '    flows = data.get("netflow_message", {}).get("flows", [])' >> test_trackers.sh && \
+    echo '    stats = data.get("flow_statistics", {})' >> test_trackers.sh && \
+    echo '    print("✅ NetFlow потоки:", len(flows))' >> test_trackers.sh && \
+    echo '    print("✅ Протоколы:", list(stats.get("protocols", {}).keys()))' >> test_trackers.sh && \
+    echo '    udp_flows = [f for f in flows if f.get("protocol_name") == "udp"]' >> test_trackers.sh && \
+    echo '    icmp_flows = [f for f in flows if f.get("protocol_name") == "icmp"]' >> test_trackers.sh && \
+    echo '    print("🔗 UDP потоки:", len(udp_flows))' >> test_trackers.sh && \
+    echo '    print("🏓 ICMP потоки:", len(icmp_flows))' >> test_trackers.sh && \
+    echo '    non_local_flows = [f for f in flows if "127.0.0.1" not in f.get("source_address", "") and "127.0.0.1" not in f.get("destination_address", "")]' >> test_trackers.sh && \
+    echo '    print("📡 Внешние соединения:", len(non_local_flows))' >> test_trackers.sh && \
+    echo 'elif "current_state" in data:' >> test_trackers.sh && \
+    echo '    current = data.get("current_state", {})' >> test_trackers.sh && \
+    echo '    connections = current.get("connections", {})' >> test_trackers.sh && \
+    echo '    udp_traffic = current.get("udp_traffic", {})' >> test_trackers.sh && \
+    echo '    icmp_traffic = current.get("icmp_traffic", {})' >> test_trackers.sh && \
+    echo '    print("✅ Входящие соединения:", len(connections.get("incoming", [])))' >> test_trackers.sh && \
+    echo '    print("✅ Исходящие соединения:", len(connections.get("outgoing", [])))' >> test_trackers.sh && \
+    echo '    print("🔗 UDP трафик:", "найден" if udp_traffic else "не найден")' >> test_trackers.sh && \
+    echo '    print("🏓 ICMP трафик:", "найден" if icmp_traffic else "не найден")' >> test_trackers.sh && \
+    echo 'else:' >> test_trackers.sh && \
+    echo '    print("⚠️ Неизвестный формат отчета")' >> test_trackers.sh && \
+    echo '"' >> test_trackers.sh && \
+    echo '    done' >> test_trackers.sh && \
+    echo 'fi' >> test_trackers.sh && \
+    echo "" >> test_trackers.sh && \
+    echo 'echo "✅ Debian 11 тест завершен"' >> test_trackers.sh && \
+    chmod +x test_trackers.sh
+
+CMD ["./test_trackers.sh"]
